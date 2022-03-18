@@ -1,0 +1,5 @@
+VERSION	SCD_Table	2.0	SCDTT_PRECISION	P_ID	
+DATE	10/2/2018	12:18 PM
+STAIRCASE1_INFO	NUp	1	NDown	3	NReversals	7	Levels	15	BeginLow?	False
+TRIAL_TIMINGS	stimulus1timelimit	6	stimulus2timelimit	6	maxresponsetime	8	inter-stimulustime	1	inter-trialtime	1
+DATA_NAMES	stim1time	stim2time	responseavailabletime	responsegiventime	trialparity	response	seed	numelements	spatialdistortion	angleviewrotation	currentstaircase	sclevel	sccurrentreversals	ptslocationstimulus1	ptslocationstimulus2	objectlocstim1	objectlocstim2

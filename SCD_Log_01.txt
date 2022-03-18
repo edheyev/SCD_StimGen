@@ -1,0 +1,6 @@
+DATE	18/03/2022	18:12
+STAIRCASE1_INFO	NUp	1	NDown	3	NReversals	7	Levels	15	BeginLow?	False
+TRIAL_TIMINGS	stimulus1timelimit	1	stimulus2timelimit	1	maxresponsetime	20	inter-stimulustime	1	inter-trialtime	1
+DATA_NAMES	stim1time	stim2time	responseavailabletime	responsegiventime	response	seed	numelements	spatialdistortion	angleviewrotation	currentstaircase	sclevel	sccurrentreversals	ptslocationstimulus1	ptslocationstimulus2	objectlocstim1	objectlocstim2
+SCDS	1.314506	3.318029	5.320158	6.632048	SCDCR_RESPONSE_INCORRECT	1	4	0.9	0.2617994	scBeginHigh_45_degrees	14	0	(0, -2)	(1.41, -1.41)	sphere (UnityEngine.GameObject)	(0.0, 0.5)	Cone (UnityEngine.GameObject)	(-0.5, 0.6)	starprism (UnityEngine.GameObject)	(0.5, -0.5)	steppyramid (UnityEngine.GameObject)	(0.1, -0.1)		sphere (UnityEngine.GameObject)	(0.0, 0.5)	Cone (UnityEngine.GameObject)	(-0.5, 0.6)	starprism (UnityEngine.GameObject)	(0.7, 0.4)	steppyramid (UnityEngine.GameObject)	(0.1, -0.1)	
+
