@@ -17,10 +17,20 @@ public class SCDSExperimentController : MonoBehaviour {
     public StaircaseController sc1; //start high
     public StaircaseController sc2; //start low   
     public StaircaseController scTutorial; //sc for tutorial
-    private StaircaseController controller; //the current controller.
+    //private StaircaseController controller; //the current controller.
     public PrefabArrayGenerator pag;// this is the prefab array generator and is used for moultiple things including adding prefab elements to arrays and compiling into lists. also spawning prfabs. 
+    public ExperimentSettings experimentSettings;
+    public ViewController viewController;
+
+    public List<int> viewpoints;
+    public List<float> spatialDistortions;
+    public int setSize;
+    public int nTrialLength;
+    public int viewCount = 0;
 
     public TabletopElement targetElement;
+    public GameObject targetObject;
+    public Vector3 randomDirection;
     public TabletopElement foilElement;
     Camera cam;
 
@@ -28,7 +38,7 @@ public class SCDSExperimentController : MonoBehaviour {
     public enum SCDLoggerSwitch { SCDLS_LOG, SCDLS_DO_NOT_LOG } //choose to make record of experiment - default is ON
     public enum SCDStaircaseNum { SCDSN_ONE, SCDSN_TWO } //how many scs are we using
     public enum SCDTrialType { SCDTT_CAPACITY, SCDTT_PRECISION } //capacity trials - vary number of features (hills) based on participant responses, precision trials - vary degree of spatial distortion
-    public enum SCDTrialState { SCDTS_WAITING, SCDTS_PREPARE, SCDTS_STIMULUS1, SCDTS_INTERSTIMULI_BLANK, SCDTS_STIMULUS2, SCDT_POSTSTIMULI_BLANK, SCDTS_RESPONSE, SCDTS_INTERTRIAL_BLANK} //different phases of a trial
+    public enum SCDTrialState { SCDTS_WAITING, SCDTS_PREPARE, SCDTS_STIMULUS1, SCDTS_STIMULUS2} //different phases of a trial
     public enum SCDExpState { SCDES_INIT, SCDES_PAUSE, SCDES_TRIALS, SCDES_ENDING } //different phases of overall experiment
     public enum SCDTrialParity { SCDTP_SAME, SCDTP_DIFFERENT} //same trial (target landscape == sample landscape) or different trial (spatial foil != sample landscape)
     
@@ -56,7 +66,7 @@ public class SCDSExperimentController : MonoBehaviour {
     public int maxTutTrials = 5;
     public float numTrials = 0;
     public float breaktrial = 30;
-
+    public bool viewsRendered = false;
     public int participantResponse;
 
     SpatialDistortionManager distortionmanager; //used to control the amount of spatial distortion applied to the spatial foil landscapes
@@ -76,14 +86,20 @@ public class SCDSExperimentController : MonoBehaviour {
     bool newtrialstate; //flag used to avoid phase code running more than once at the beginning of a new phase
     private bool newsession = true;// used at experiment start once to log initial details.
 
+    //trial progression
+    public int sdId = 0;
+    public int vpId = 0;
+    public bool progress = false;
+    public bool end = false;
+
     // Use this for initialization
     void Start () {
-
-        
         lasttrial = false;
         //identify spatial view generator and staircase controllers
         svg = GameObject.Find("TableViewGenerator").GetComponent<TableViewGenerator>(); //
         pag = GameObject.Find("PrefabArrayGenerator").GetComponent<PrefabArrayGenerator>();
+        viewController = GameObject.Find("ViewController").GetComponent<ViewController>();
+
         distortionmanager = gameObject.GetComponent<SpatialDistortionManager>();
 
         cam = GameObject.Find("DesktopCamera").GetComponent<Camera>(); ;
@@ -92,7 +108,9 @@ public class SCDSExperimentController : MonoBehaviour {
         //these are currently hard coded which has the advantage of preserving them for the record, although it may be better to
         //read experimental parameters in from a file
         InitializeStaircase(); //note: you could in principle re-run this if necessary to change between trialtypes during the same session        
-        controller = sc1;
+        //experimentSettings = new ExperimentSettings(viewpoints, spatialDistortions, setSize);
+
+       // controller = sc1;
         validControllerList = new List<StaircaseController>();
 
         switch (tutorialSwitch)
@@ -116,22 +134,9 @@ public class SCDSExperimentController : MonoBehaviour {
                     }
                     break;
                 }
-            case SCDTutorialSwitch.SCDTS_TUTORIAL:
-                {
-                    //tutorial stuff
-                    //change sc
-                    validControllerList.Clear();
-                    StaircaseController scnew = (StaircaseController)Instantiate(scTutorial);
-                    scnew.transform.parent = this.transform;
-                    validControllerList.Add(scnew);
-                    scnew.name = "scTutorialController";
-                    //change view amount
-                    
-                   
-                    //provide feedback?
-                    break;
-                }      
+             
         }
+
         originalControllerList = new List<StaircaseController>(validControllerList); //this valid controller list will deplete as staircases complete
                       
         //identify logger and record
@@ -217,7 +222,7 @@ public class SCDSExperimentController : MonoBehaviour {
             case SCDExpState.SCDES_TRIALS:
                 {
                     //running trials
-                    UpdateTrialPhase();
+                    RunTrials();
                     break;
                 }
             case SCDExpState.SCDES_ENDING:
@@ -228,6 +233,124 @@ public class SCDSExperimentController : MonoBehaviour {
                 }
         }
 	}
+
+    void RunTrials()
+    {
+
+       //1 render all views (left and right)
+       //2 randomly select target object
+       //3 randomly select direction
+       // cycle through distortions
+       //screen shot
+
+
+
+        //for n distortions
+        
+        switch(trialstate)
+        {
+            case SCDTrialState.SCDTS_PREPARE:
+                {
+                    
+                    if (!viewsRendered)
+                    {
+                        sdId = 0;
+                        vpId = 0;
+                        svg.spatialDistortionLevel = 1;
+                        svg.AppendView(SpatialViewType.SVT_SAMPLE);
+
+                        var randInt = Random.Range(1, pag.arrayspec.Count) -1;
+                        targetElement = pag.arrayspec[randInt];
+                        string objectName = targetElement.profile.ToString();
+
+                        Debug.Log(objectName.Replace("TABLE_ELEMENT_","").ToLower()+"(Clone)");
+
+                        svg.RenderView(0, vpId);
+                        targetObject = GameObject.Find(objectName.Replace("TABLE_ELEMENT_", "").ToLower() + "(Clone)");
+
+                        //randomly select direction
+                        float randRads = Random.Range(0, (2 * Mathf.PI));
+                        randomDirection = new Vector3(Mathf.Sin(randRads),0, Mathf.Cos(randRads));                        
+                        viewsRendered = true;
+                    }
+
+                    if (Input.GetKeyDown("d"))
+                    {
+                        viewCount++;
+                        //svg.RenderView(0, vpId);
+                        //select distortion level
+                        Debug.Log("spatial distortion level = " + spatialDistortions[sdId]);
+                        Debug.Log("vps" + viewController.anglesOfRotation[vpId]);
+                        Debug.Log("viewcount" + viewCount);
+
+
+
+
+                        viewController.currentview = vpId;
+                        viewController.MoveView();
+
+
+
+                        //move object
+                        // targetObject.gameObject.transform.position = new Vector3(targetObject.transform.position.x + spatialDistortions[sdId], targetObject.transform.position.y, targetObject.transform.position.z);
+                        targetObject.gameObject.transform.position += randomDirection * spatialDistortions[sdId];
+
+                        //cycle views
+                        
+                        vpId++;                 
+                        
+
+                        if (vpId > viewController.anglesOfRotation.Count-1)
+                        {
+                            Debug.Log("reversing <<<<<<<<< ");
+                            viewController.clockwise = !viewController.clockwise;
+                            vpId = 1;
+
+                            if(viewCount >= (viewController.anglesOfRotation.Count * 2) -1 )
+                            {
+
+                                if (sdId >= spatialDistortions.Count-1)//(viewController.anglesOfRotation.Count * spatialDistortions.Count)
+                                {
+                                    sdId = 0;
+                                    Debug.Log("next view");
+                                    svg.randSeed++;
+                                    viewsRendered = false;
+                                }
+                                else
+                                {
+                                sdId++;
+                                }
+
+                            }
+
+                            
+
+                            //if finished
+                            //if (vpId > viewpoints.Count-1)
+                           // {
+                           //     trialstate = SCDTrialState.SCDTS_WAITING;
+                          //  }
+                        }
+
+                    }
+                    
+                    break;
+                }
+            case SCDTrialState.SCDTS_WAITING:
+                {
+                    Debug.Log("waiting");                   
+                    break;
+                }
+
+
+        }
+        // make distortion happen
+
+        //cycle through viewpoints taking screenshots
+
+        //
+
+    }
 
     void UpdateTrialPhase()
     {
@@ -301,8 +424,8 @@ public class SCDSExperimentController : MonoBehaviour {
                                         {
                                            //use chosen sc
                                             staircasesearching = false;
-                                            controller = validControllerList[randomStaircaseSelection];
-                                            currentstair = controller.name;                                           
+                                       //     controller = validControllerList[randomStaircaseSelection];
+                                     //       currentstair = controller.name;                                           
                                             viewAngleIndex = originalControllerList.IndexOf(validControllerList[randomStaircaseSelection]); // view angle index is passed to the spatial array generator to inform viewpoint location.
                                             if (numstairs == SCDStaircaseNum.SCDSN_TWO)
                                             {
@@ -323,31 +446,7 @@ public class SCDSExperimentController : MonoBehaviour {
                                 }
                                 break;
 
-                            }
-                        case SCDTutorialSwitch.SCDTS_TUTORIAL:
-                            {
-                                if (validControllerList[0].perceived_counter <= maxTutTrials)//participant must score n in a row to sucessfully end the tutorial phase. 
-                                {
-                                    //use chosen sc                                    
-                                    controller = validControllerList[0];
-                                    currentstair = controller.name;
-                                    record.currentstaircase = currentstair;
-
-                                    viewAngleIndex = 1; // view angle index is passed to the spatial array generator to inform viewpoint location.
-                                    
-                                }
-                                else//remove chosen sc
-                                {                                                           
-                                    Debug.Log("Tutorial finished");
-                                    trialstate = SCDTrialState.SCDTS_WAITING;
-                                    expstate = SCDExpState.SCDES_ENDING;
-                                    newtrialstate = true;
-                                    lasttrial = true;
-                                    SceneManager.LoadScene("Splash", LoadSceneMode.Single);
-                                    return;                                    
-                                }
-                                break;
-                            }
+                            }                       
                     }
                                                                   
 
@@ -356,7 +455,7 @@ public class SCDSExperimentController : MonoBehaviour {
                     //this next piece of code alters the changable element in the trial (number of objects or amount of spatial distortion) based on the staircase level.                     
                     if (trialtype == SCDTrialType.SCDTT_CAPACITY)
                     {
-                        svg.nElements = (int)controller.levels[controller.currentlevel]; //the staircase levels are set to run in integer steps from 1, starting low. The lowest possible number of hills in the array should be three.
+                        svg.nElements = setSize;//(int)controller.levels[controller.currentlevel]; //the staircase levels are set to run in integer steps from 1, starting low. The lowest possible number of hills in the array should be three.
                         //warning: the staircase controller is typically set so that sc.levels[sc.currentlevel] is a 0-based positive integer i.e., the same as sc.currentlevel
                         //but the idea is that sc.levels can be used for to set different values - however to allow for capacity and precision trials in the same code we convert the integers to the values we need.
                         //in this case we just add the minimum number of mountains to the current staircase level.
@@ -365,15 +464,15 @@ public class SCDSExperimentController : MonoBehaviour {
                     else
                     {
                         //alter distortion values in svg
-                        svg.spatialDistortionLevel = distortionmanager.AbsoluteDistortionFromStandard(controller.levels[controller.currentlevel]);
+                        svg.spatialDistortionLevel = 0;// distortionmanager.AbsoluteDistortionFromStandard(controller.levels[controller.currentlevel]);
                     }
                     
                     //record array values 
                     record.seed = (int)svg.randSeed;
                     record.numelements = svg.nElements; //record num elements
                     record.spatialdistortion = svg.spatialDistortionLevel; //record distance distorted 
-                    record.sclevel = controller.currentlevel; //record sc level
-                    record.sccurrentreversals = controller.currentreversals; //record sc current reversals
+                   // record.sclevel = controller.currentlevel; //record sc level
+                  //  record.sccurrentreversals = controller.currentreversals; //record sc current reversals
                     record.angleviewrotation = svg.viewcontroller.viewpointRange/(svg.viewcontroller.nViewpoints - 1);
 
                     /*
@@ -407,6 +506,7 @@ public class SCDSExperimentController : MonoBehaviour {
                 }
             case SCDTrialState.SCDTS_STIMULUS1:
                 {
+
                     //check to see whether stimulus has already been spawned/built/rendered
                     //if not, render stimulus1
                     if (!newstimulusrendered)
@@ -431,7 +531,7 @@ public class SCDSExperimentController : MonoBehaviour {
                     //then switch to the next trial state
                     if (Time.time>nexttrialtime)
                     {
-                        trialstate = SCDTrialState.SCDTS_INTERSTIMULI_BLANK;                        
+                       // trialstate = SCDTrialState.SCDTS_INTERSTIMULI_BLANK;                        
                         nexttrialtime = Time.time + interstimulustime;
                         newtrialstate = true;
                     }
@@ -452,7 +552,7 @@ public class SCDSExperimentController : MonoBehaviour {
 
                     break;                   
                 }
-            case SCDTrialState.SCDTS_INTERSTIMULI_BLANK:
+         /*   case SCDTrialState.SCDTS_INTERSTIMULI_BLANK:
                 {
                     if (newtrialstate)
                     {
@@ -472,7 +572,7 @@ public class SCDSExperimentController : MonoBehaviour {
                     }
                     break;
 
-                }
+                }*/
             case SCDTrialState.SCDTS_STIMULUS2:
                 {
                     //check to see whether stimulus has already been spawned/built/rendered
@@ -503,7 +603,7 @@ public class SCDSExperimentController : MonoBehaviour {
                     //then switch to the next trial state
                     if (Time.time > nexttrialtime)
                     {
-                        trialstate = SCDTrialState.SCDT_POSTSTIMULI_BLANK;
+                    //    trialstate = SCDTrialState.SCDT_POSTSTIMULI_BLANK;
                         spheretime = Time.time + fadetime;
                         nexttrialtime = Time.time + poststimulustime;
                         newtrialstate = true;
@@ -522,7 +622,7 @@ public class SCDSExperimentController : MonoBehaviour {
 
                     break;
                 }
-            case SCDTrialState.SCDT_POSTSTIMULI_BLANK:
+           /* case SCDTrialState.SCDT_POSTSTIMULI_BLANK:
                 {
                     if (newtrialstate)
                     {
@@ -557,7 +657,6 @@ public class SCDSExperimentController : MonoBehaviour {
 
                     if (newtrialstate)
                     {
-                        //objectHighlighter.HighlightTwo(pag.arrayspec[pag.indextomove], pag.arrayspec); //highlight two objects
                     }
 
                     RaycastHit hit;
@@ -565,10 +664,8 @@ public class SCDSExperimentController : MonoBehaviour {
                                        
                     if (true)
                     {
-                        //Debug.Log(hit.transform.name);
                         if(currenttrialparity == SCDTrialParity.SCDTP_SAME)
                         {
-                           // objectHighlighter.HighlightTarget(targetElement, objectHighlighter.color2);
                             if (Input.GetKeyDown("s"))
                                 {
                                     //process response correct
@@ -583,7 +680,6 @@ public class SCDSExperimentController : MonoBehaviour {
                         }
                         else if (currenttrialparity == SCDTrialParity.SCDTP_DIFFERENT)
                             {
-                           // objectHighlighter.HighlightTarget(foilElement, objectHighlighter.color2);
                             if (Input.GetKeyDown("s"))
                             {
                                     //process incorrect response
@@ -598,8 +694,6 @@ public class SCDSExperimentController : MonoBehaviour {
                         }
                         else
                         {
-                          //  objectHighlighter.HighlightTarget(targetElement, objectHighlighter.color1);
-                         //   objectHighlighter.HighlightTarget(foilElement, objectHighlighter.color1);
                         }
                     }              
 
@@ -618,13 +712,11 @@ public class SCDSExperimentController : MonoBehaviour {
                     if (participantResponse == 0) //participant is correct
                     {
                         //movestaircase down                          
-                        controller.ProcessResponse(true); //change staircase currentlevel                                                            
                         record.response = SCDControllerRecord.SCDCR_RESPONSE.SCDCR_RESPONSE_CORRECT; //record pts response                             
                     }
                     else if (participantResponse == 1) //participant incorrect
                     {
                         // move staircase up
-                        controller.ProcessResponse(false);//change staircase currentlevel                
                         record.response = SCDControllerRecord.SCDCR_RESPONSE.SCDCR_RESPONSE_INCORRECT; //record pts response
                     }
                     else //participant did not answer
@@ -633,14 +725,11 @@ public class SCDSExperimentController : MonoBehaviour {
                         record.response = SCDControllerRecord.SCDCR_RESPONSE.SCDCR_RESPONSE_NO_RESPONSE; //record pts response
                     }
 
-                    
-
                            if (logswitch == SCDLoggerSwitch.SCDLS_LOG) //write record to log file
                             {
                                 logger.LogEvent("SCDS", record.LogString());
                             }
                            //reset various bits
-                           // objectHighlighter.ResetObjects(pag.distinctelements);
                             trialstate = SCDTrialState.SCDTS_INTERTRIAL_BLANK;
                             spheretime = Time.time + fadetime;
                             nexttrialtime = Time.time + intertrialtime;
@@ -686,9 +775,12 @@ public class SCDSExperimentController : MonoBehaviour {
                         newtrialstate = false;
                     }
                     break;
-                }
+                }*/
         }
     }
+
+
+
     void InitializeStaircase()
     {
         if (trialtype == SCDTrialType.SCDTT_CAPACITY)
@@ -770,11 +862,10 @@ public class SCDSExperimentController : MonoBehaviour {
 
             sc1.stepsizes.Clear();
             sc2.stepsizes.Clear();
-            Debug.Log(sc1.stepsizes.Count);
-            Debug.Log(numLevels);
+           // Debug.Log(sc1.stepsizes.Count);
+           // Debug.Log(numLevels);
             for (int i = 0; i < sc1.nreversals-1; i++)
             {
-                Debug.Log("hello");
                 if (i < 2)
                 {
                     sc1.stepsizes.Add(Mathf.FloorToInt(Mathf.Pow(2, 2 - i)));
@@ -795,7 +886,6 @@ public class SCDSExperimentController : MonoBehaviour {
 
     private static float[] LinSpace(float x1, float x2, int n)
     {
-        //x1 = min x2 = max, n = number points
         float step = (x2 - x1) / (n - 1); //step size
         float[] y = new float[n];         // array to hold output values
         for (int i = 0; i < n; i++)
@@ -841,5 +931,19 @@ public class SCDControllerRecord
     public string LogString()
     {
         return stim1time + "\t" + stim2time + "\t" + responseavailabletime + "\t" + responsegiventime + "\t"  + response.ToString() + "\t" + seed.ToString() + "\t" + numelements.ToString() + "\t" + spatialdistortion.ToString() + "\t" + angleviewrotation.ToString() + "\t"+ currentstaircase.ToString() + "\t" + sclevel.ToString() + "\t" + sccurrentreversals.ToString() + "\t" +  ptslocstim1.ToString() + "\t" + ptslocstim2.ToString() + "\t" + objectlocstim1 + "\t" + objectlocstim2 + "\n";
+    }
+}
+
+public class ExperimentSettings : MonoBehaviour
+{
+    public List<int> viewpoints;
+    public List<float> spatialDistortions;
+    public int setSize;
+
+    public ExperimentSettings(List<int> _viewpoints, List<float> _spatialDistortions, int _setSize)
+    {
+        viewpoints = _viewpoints;
+        spatialDistortions = _spatialDistortions;
+        setSize = _setSize;
     }
 }

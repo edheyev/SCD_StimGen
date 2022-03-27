@@ -17,15 +17,14 @@ public class ViewController : MonoBehaviour {
     public List<float> anglesOfRotation;
     public GameObject teleportOrigin;
     public int currentview = 0;
+    public bool clockwise = true;
     //[Range(0, 180)]
     //public int observationArc;
 	// Use this for initialization
 	void Start () {
         nViewpoints = anglesOfRotation.Count;
-        TestViewpoints = new Viewpoint[nViewpoints, 2];
-        
+        TestViewpoints = new Viewpoint[nViewpoints, 2];        
         nViewpoints = anglesOfRotation.Count;
-        Debug.Log(nViewpoints);
         currentview = Mathf.FloorToInt((nViewpoints - 1) / 2.0f); //centres currentview at the start
         teleportOrigin = GameObject.Find("TeleportOriginDesktop");
         //viewpoints.Clear();
@@ -44,7 +43,7 @@ public class ViewController : MonoBehaviour {
                     v.location.y  = -1*(Mathf.Cos(thisAngleRads) * (env.environmentRadius + 1f));//TRIG toi work out x and y. 3f is the distance from the array. this should be changed for different array sizes
                     v.location.x = Mathf.Sin(thisAngleRads) * (env.environmentRadius + 1f);
                     TestViewpoints[i,j] = v;
-                    Debug.Log(i +""+ j + " x= " + v.location.x + " y= " + " " + v.location.y + "");
+                    //Debug.Log(i +""+ j + " x= " + v.location.x + " y= " + " " + v.location.y + "");
 
                 }
                 else if (j == 1) //calculate anticlockwise rotation and store in array
@@ -93,7 +92,7 @@ public class ViewController : MonoBehaviour {
         //Debug.Log(TestViewpoints[currentview, 1]);
         //the +1.5f below denotes the viewpoint height above the floor
         float direction = Random.value;        
-        if (direction > 0.5) //anticlockwise
+        if (!clockwise) //anticlockwise
         {
             teleportOrigin.transform.position = new Vector3(TestViewpoints[currentview, 0].location.x, env.viewHeight, TestViewpoints[currentview, 0].location.y);
             teleportOrigin.transform.LookAt(new Vector3(TestViewpoints[currentview, 0].lookat.x, env.arenafloor.transform.position.y+0.8f , TestViewpoints[currentview, 0].lookat.y)); // these define th height and position of viewpoints. 

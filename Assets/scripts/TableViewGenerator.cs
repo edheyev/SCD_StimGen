@@ -52,7 +52,6 @@ public class TableViewGenerator : SpatialViewGenerator
         //Debug.Log("ConditionsController conditions: " + conditionscontroller.conditions.Count);
         prefabarraygenerator = GameObject.Find("PrefabArrayGenerator").GetComponent<PrefabArrayGenerator>();
         maxviews = viewcontroller.anglesOfRotation.Count -1;
-        Debug.Log(maxviews + "maxviews");
     }
 
     public void BuildViewList(List<MountainViewType> types)

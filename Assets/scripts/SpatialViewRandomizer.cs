@@ -14,9 +14,12 @@ public class SpatialViewRandomizer : MonoBehaviour {
     public void Start()
     {
         randstream = new PRandStream(220);
+        /*
         Debug.Log("Random Number Checks...");
         Debug.Log("SetRandomizer 100");
+        */
         SetRandomizer(100);
+        /*
         Debug.Log("Noise Seed: " + _noise_seed);
         Debug.Log("Noise Seed with offset 1: " + GetNoiseSeed(1));
         Debug.Log("Noise Seed with offset 2: " + GetNoiseSeed(2));
@@ -30,7 +33,9 @@ public class SpatialViewRandomizer : MonoBehaviour {
         Debug.Log("Viewpoint Randomizer Seed: " + _viewpoint_randomizer_seed);
         Debug.Log("Conditions Randomizer Seed: " + _conditions_randomizer_seed);
         Debug.Log("SetRandomizer 200");
+        */
         SetRandomizer(200);
+        /*
         Debug.Log("Noise Seed: " + _noise_seed);
         Debug.Log("Noise Seed with offset 1: " + GetNoiseSeed(1));
         Debug.Log("Noise Seed with offset 2: " + GetNoiseSeed(2));
@@ -44,7 +49,9 @@ public class SpatialViewRandomizer : MonoBehaviour {
         Debug.Log("Viewpoint Randomizer Seed: " + _viewpoint_randomizer_seed);
         Debug.Log("Conditions Randomizer Seed: " + _conditions_randomizer_seed);
         Debug.Log("SetRandomizer 100");
+        */
         SetRandomizer(100);
+        /*
         Debug.Log("Noise Seed: " + _noise_seed);
         Debug.Log("Noise Seed with offset 1: " + GetNoiseSeed(1));
         Debug.Log("Noise Seed with offset 2: " + GetNoiseSeed(2));
@@ -65,9 +72,10 @@ public class SpatialViewRandomizer : MonoBehaviour {
         Debug.Log("Random from Range [0 1 2 3]:" + randstream.Range(0, 4));
         Debug.Log("Random from Range [0 1 2 3]:" + randstream.Range(0, 4));
         Debug.Log("Random from Range [0 1 2 3]:" + randstream.Range(0, 4));
+        */
         for (int i=0;i<100;i++)
         {
-            Debug.Log("Random float [0-1]:" + randstream.Value());
+            //Debug.Log("Random float [0-1]:" + randstream.Value());
         }
 
     }

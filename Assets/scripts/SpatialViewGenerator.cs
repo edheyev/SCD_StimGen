@@ -122,10 +122,7 @@ public class SpatialViewGenerator : MonoBehaviour
                 }
             case SpatialViewType.SVT_SPATIAL:
                 {
-                    //Debug.Log(views.Count + "viewcount");
-                    //Debug.Log(views[0]);
-                    //Debug.Log(spatialDistortionLevel);
-                    //Debug.Log(spatialProtectElement);
+                    
                     AppendSpatialFoil(views[0], spatialDistortionLevel, spatialProtectElement); //note this assumes the sample image is (already defined as) views[0];                    
                     break;
                 }
