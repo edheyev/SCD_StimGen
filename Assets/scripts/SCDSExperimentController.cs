@@ -156,8 +156,6 @@ public class SCDSExperimentController : MonoBehaviour {
 
     void RunTrials()
     {
-         
-        
         switch(trialstate)
         {
             case SCDTrialState.SCDTS_PREPARE:
@@ -165,6 +163,7 @@ public class SCDSExperimentController : MonoBehaviour {
                     
                     if (!viewsRendered)
                     {
+                            //set up trial
                         DestroyItemsWithTag("clone");
 
                         sdId = 0;
@@ -172,17 +171,50 @@ public class SCDSExperimentController : MonoBehaviour {
                         svg.spatialDistortionLevel = 1;
                         svg.AppendView(SpatialViewType.SVT_SAMPLE);
 
-                        var randInt = Random.Range(1, pag.arrayspec.Count) -1;
-                        targetElement = pag.arrayspec[randInt];
-                        string objectName = targetElement.profile.ToString();
 
-                        svg.RenderView(0, vpId);
-                        targetObject = GameObject.Find(objectName.Replace("TABLE_ELEMENT_", "").ToLower() + "(Clone)");
+                            //check object overlaps
+                        bool okcheck = false;
+
+                        while (!okcheck)
+                        {
+                            var randInt = Random.Range(1, pag.arrayspec.Count) -1;
+                            targetElement = pag.arrayspec[randInt];
+                            string objectName = targetElement.profile.ToString();
+
+                            svg.RenderView(0, vpId);
+                            targetObject = GameObject.Find(objectName.Replace("TABLE_ELEMENT_", "").ToLower() + "(Clone)");
+                            float randRads = Random.Range(0, (2 * Mathf.PI));
+                            randomDirection = new Vector3(Mathf.Sin(randRads),0, Mathf.Cos(randRads));
+                            targetOrgPos = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, targetObject.transform.position.z); // target object is sometimes randomly destroyed... i cant figure out why. but lines 190-194 seem to compensate for it
+
+                            foreach(var distortion in spatialDistortions)
+                            {
+                                Vector3 imaginaryposition = (Vector3)(targetOrgPos + (randomDirection * distortion));
+
+                                foreach (var obj in pag.arrayspec)
+                                {
+                                    float qx = imaginaryposition.x - obj.centre.x;
+                                    float qy = imaginaryposition.z - obj.centre.y;
+                                    float d = Mathf.Sqrt(qx * qx + qy * qy);
+
+                                    if (d != 0)
+                                    {
+                                        if ((d < obj.radius) || (d < obj.radius))
+                                        {
+                                            Debug.Log("Collision Detected");
+                                            break;
+                                        }
+                                    }
+                                    
+                                }
+
+                            }
+                            okcheck = true;
+
+
+                        }
+                            viewsRendered = true;
                        
-                        float randRads = Random.Range(0, (2 * Mathf.PI));
-                        randomDirection = new Vector3(Mathf.Sin(randRads),0, Mathf.Cos(randRads));                        
-                        targetOrgPos = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, targetObject.transform.position.z); // target object is sometimes randomly destroyed... i cant figure out why. but lines 190-194 seem to compensate for it
-                        viewsRendered = true;
                         
                     }
 
@@ -211,17 +243,20 @@ public class SCDSExperimentController : MonoBehaviour {
 
                         if (vpId > viewController.anglesOfRotation.Count-1)
                         {
+                                //change rotation direction
                             viewController.clockwise = !viewController.clockwise;
                             vpId = 0;
 
                             if(viewCount >= (viewController.anglesOfRotation.Count * 2) -1 )
                             {
+                                    //advance distortion
                                 viewCount = 0;
                                 sdId++;
                                 distorted = false;
 
                                 if (sdId >= spatialDistortions.Count)
                                 {
+                                        //advance trial
                                     sdId = 0;
                                     trialCount++;
                                     svg.randSeed++;
@@ -236,38 +271,37 @@ public class SCDSExperimentController : MonoBehaviour {
                                 trialstate = SCDTrialState.SCDTS_WAITING;
                                 expstate = SCDExpState.SCDES_ENDING;
                             }
-                        }
                     }
+                }
                     
-                    string ssFileName = "_trial_" + trialCount + "_vp_" + viewController.anglesOfRotation[vpId] + "_sd_" + spatialDistortions[sdId]+"_date_"+ date + ".png";
+                //log and screenshot
+                string ssFileName = "_trial_" + trialCount + "_vp_" + viewController.anglesOfRotation[vpId] + "_sd_" + spatialDistortions[sdId]+"_date_"+ date + ".png";
 
-                    ScreenCapture.CaptureScreenshot("./"+folderPath+ssFileName);
+                ScreenCapture.CaptureScreenshot("./"+folderPath+ssFileName);
 
-                    record.screenshotFilename = ssFileName;
-                    record.trialNum = trialCount;
-                    record.angleviewrotation = viewController.anglesOfRotation[vpId];
-                    record.rotDirection = viewController.clockwise ? "clockwise" : "counter-clockwise";
-                    record.spatialdistortion = spatialDistortions[sdId];
-                    record.numelements = 4;
-                    record.seed = (int)svg.randSeed;
-                    record.cameraloc = "camPos:" + "_x:" + cam.transform.position.x.ToString() + "_y:" + cam.transform.position.y.ToString() + "_z:" + cam.transform.position.z.ToString();
-                    record.camerarot = "camRot:" + "_x:" + cam.transform.rotation.x.ToString() + "_y:" + cam.transform.rotation.y.ToString() + "_z:" + cam.transform.rotation.z.ToString();
+                record.screenshotFilename = ssFileName;
+                record.trialNum = trialCount;
+                record.angleviewrotation = viewController.anglesOfRotation[vpId];
+                record.rotDirection = viewController.clockwise ? "clockwise" : "counter-clockwise";
+                record.spatialdistortion = spatialDistortions[sdId];
+                record.numelements = 4;
+                record.seed = (int)svg.randSeed;
+                record.cameraloc = "camPos:" + "_x:" + cam.transform.position.x.ToString() + "_y:" + cam.transform.position.y.ToString() + "_z:" + cam.transform.position.z.ToString();
+                record.camerarot = "camRot:" + "_x:" + cam.transform.rotation.x.ToString() + "_y:" + cam.transform.rotation.y.ToString() + "_z:" + cam.transform.rotation.z.ToString();
 
-                    record.objectlocs = GetObjectLocs();
+                record.objectlocs = GetObjectLocs();
                     
                                     
-                    logger.LogEvent("StimGen", record.LogString());
-                    screenshotTaken = true;
+                logger.LogEvent("StimGen", record.LogString());
+                screenshotTaken = true;
                     
-                    break;
-                }
-            case SCDTrialState.SCDTS_WAITING:
-                {
-                    Debug.Log("waiting");                   
-                    break;
-                }
-
-
+                break;
+            }
+        case SCDTrialState.SCDTS_WAITING:
+            {
+                Debug.Log("waiting");                   
+                break;
+            }
         }
     }
 
