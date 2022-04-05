@@ -72,6 +72,8 @@ public class SCDSExperimentController : MonoBehaviour {
     // Use this for initialization
     private void Awake()
     {
+        Screen.SetResolution(1920, 1080, true);
+
         date = System.DateTime.Now.ToShortDateString();
         date = date.Replace("/", "-");
         date = date.Replace(" ", "_");
@@ -117,7 +119,7 @@ public class SCDSExperimentController : MonoBehaviour {
             //log experiment details at the start of the experiment.                                 
             logger.LogEvent("DATE", System.DateTime.Now.ToShortDateString() + "\t"+ System.DateTime.Now.ToShortTimeString() );
             logger.LogEvent("BatchInfo", "totalTrials" + "\t" + totalTrialsToGen + "\t" + "viewpoints" + "\t" + FloatListToText(viewController.anglesOfRotation) + "\t" + "distortions" + "\t" + FloatListToText(spatialDistortions) + "\n" ); 
-            logger.LogEvent("DATA_NAMES", "screenshotFilename" + "\t" + "trialNum" + "\t" + "angleViewRotation" + "\t" + "spatialDistortion" + "\t" + "numElements" + "\t" + "seed" + "\t"+ "cameraLoc" + "\t" + "cameraRot" + "\t" + "objectLocs");
+            logger.LogEvent("DATA_NAMES", "screenshotFilename" + "\t" + "trialNum" + "\t" + "angleViewRotation" + "\t" + "rotationDirection"+ "\t" + "spatialDistortion" + "\t" + "numElements" + "\t" + "seed" + "\t"+ "cameraLoc" + "\t" + "cameraRot" + "\t" + "objectLocs");
 
             newsession = false;            
         }
@@ -176,11 +178,12 @@ public class SCDSExperimentController : MonoBehaviour {
 
                         svg.RenderView(0, vpId);
                         targetObject = GameObject.Find(objectName.Replace("TABLE_ELEMENT_", "").ToLower() + "(Clone)");
-                        targetOrgPos = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, targetObject.transform.position.z);
-
+                       
                         float randRads = Random.Range(0, (2 * Mathf.PI));
                         randomDirection = new Vector3(Mathf.Sin(randRads),0, Mathf.Cos(randRads));                        
+                        targetOrgPos = new Vector3(targetObject.transform.position.x, targetObject.transform.position.y, targetObject.transform.position.z); // target object is sometimes randomly destroyed... i cant figure out why. but lines 190-194 seem to compensate for it
                         viewsRendered = true;
+                        
                     }
 
                     if (screenshotTaken)
@@ -190,7 +193,6 @@ public class SCDSExperimentController : MonoBehaviour {
                         {
                             string objectName = targetElement.profile.ToString();
                             targetObject = GameObject.Find(objectName.Replace("TABLE_ELEMENT_", "").ToLower() + "(Clone)");
-
                         }
                         viewCount++;
 
@@ -237,13 +239,14 @@ public class SCDSExperimentController : MonoBehaviour {
                         }
                     }
                     
-                    string ssFileName = date + "_trial_" + trialCount + "_vp_" + viewController.anglesOfRotation[vpId] + "_sd_" + spatialDistortions[sdId]+ ".png";
+                    string ssFileName = "_trial_" + trialCount + "_vp_" + viewController.anglesOfRotation[vpId] + "_sd_" + spatialDistortions[sdId]+"_date_"+ date + ".png";
 
                     ScreenCapture.CaptureScreenshot("./"+folderPath+ssFileName);
 
                     record.screenshotFilename = ssFileName;
                     record.trialNum = trialCount;
                     record.angleviewrotation = viewController.anglesOfRotation[vpId];
+                    record.rotDirection = viewController.clockwise ? "clockwise" : "counter-clockwise";
                     record.spatialdistortion = spatialDistortions[sdId];
                     record.numelements = 4;
                     record.seed = (int)svg.randSeed;
@@ -316,6 +319,7 @@ public class SCDControllerRecord
     public string screenshotFilename; //when response boxes become active
     public int trialNum; 
     public float angleviewrotation;
+    public string rotDirection;
     public float spatialdistortion; //radial distance of spatial distortion
     public int numelements; //number of elements presented in array
     public int seed; //record random seed
@@ -327,7 +331,7 @@ public class SCDControllerRecord
 
     public string LogString()
     {
-        return screenshotFilename + "\t" + trialNum.ToString() + "\t" + angleviewrotation.ToString() + "\t" + spatialdistortion.ToString() + "\t"  + numelements.ToString() + "\t" + seed.ToString() + "\t" +cameraloc + "\t" + camerarot + "\t" + objectlocs.ToString() + "\n";
+        return screenshotFilename + "\t" + trialNum.ToString() + "\t" + angleviewrotation.ToString() + "\t" + rotDirection + "\t" + spatialdistortion.ToString() + "\t"  + numelements.ToString() + "\t" + seed.ToString() + "\t" +cameraloc + "\t" + camerarot + "\t" + objectlocs.ToString() + "\n";
     }
 }
 
