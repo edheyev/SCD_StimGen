@@ -201,7 +201,6 @@ public class SCDSExperimentController : MonoBehaviour {
                                     {
                                         if ((d < obj.radius) || (d < obj.radius))
                                         {
-                                            Debug.Log("Collision Detected");
                                             break;
                                         }
                                     }
