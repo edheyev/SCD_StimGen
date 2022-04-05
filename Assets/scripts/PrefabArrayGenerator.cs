@@ -97,7 +97,7 @@ public class PrefabArrayGenerator : SpatialArrayGenerator
         state = TableState.TS_SPAWN;
         topofeatures = new List<TabletopElement>(arrayspec);
         GameObject[] destroyItems;
-        destroyItems = GameObject.FindGameObjectsWithTag("clone");
+        destroyItems = GameObject.FindGameObjectsWithTag("scenery");
         for (int i = 0; i < destroyItems.Length; i++)
         {
             Destroy(destroyItems[i].gameObject);

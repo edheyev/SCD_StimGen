@@ -1,12 +1,16 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.IO;
 
 public class Logger : MonoBehaviour
 {
 
     private StreamWriter sw;
-    string pathroot = "SCD_Log";
+    string pathroot = "SCD_STIMGEN_LOG";
     string ext = ".txt";
     public SCDSExperimentController controller;
     SessionSettings sessionsettings;
@@ -25,16 +29,7 @@ public class Logger : MonoBehaviour
         {
 
         }
-
-        if (sessionsettings != null)
-        {
-            if (sessionsettings.experimentcode.Length > 0 && sessionsettings.participantid.Length > 0)
-            {
-                pathroot = sessionsettings.experimentcode + "_" + sessionsettings.participantid + "_SCD_ViewChange_Table_Log";
-            }
-        }
         
-
         int i = 0;
         string newpath = pathroot + "_" + i.ToString("D2") + ext;
         while (File.Exists(newpath) & i < 100)
@@ -45,10 +40,9 @@ public class Logger : MonoBehaviour
         }
 
         controller = GameObject.Find("ExperimentController").GetComponent<SCDSExperimentController>();
-        if (controller.logswitch == SCDSExperimentController.SCDLoggerSwitch.SCDLS_LOG)
-        {
-            sw = new StreamWriter(newpath); //append to logfile if it already exists  
-        }
+        
+        sw = new StreamWriter(controller.folderPath + newpath); //append to logfile if it already exists  
+        
     }
 
     public void LogEvent(string lineID, string logstring)
